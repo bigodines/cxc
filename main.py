@@ -80,12 +80,6 @@ def get_credentials():
     return credentials
 
 def main():
-    """Shows basic usage of the Sheets API.
-
-    Creates a Sheets API service object and prints the names and majors of
-    students in a sample spreadsheet:
-    https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
-    """
 #     credentials = get_credentials()
 #     http = credentials.authorize(httplib2.Http())
 #     discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?'
@@ -108,9 +102,9 @@ def main():
 #             print('%s, %s' % (row[0], row[4]))
 #
     orders = read_orders()
-    for order in orders:
-        print(order.keys())
-        break
+#    for order in orders:
+#        print(order.keys())
+#        break
 
 if __name__ == '__main__':
     main()
