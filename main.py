@@ -1,7 +1,9 @@
 
 from __future__ import print_function
+import csv
 import httplib2
 import os
+import sqlite3
 
 from apiclient import discovery
 from oauth2client import client
@@ -20,6 +22,34 @@ SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'Google Sheets API Python Quickstart'
 
+
+def read_orders():
+    columns = []
+    with open('data/orders.csv', 'rb') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+
+        data = []
+        for line in reader:
+            data.append(line)
+
+    columns = data[0].keys()
+    conn = sqlite3.connect(':memory:')
+    cur = conn.cursor()
+    str_columns = ",".join(["'"+item.replace(" ", "_") + "'"for item in columns ])
+
+    print(str_columns)
+    cur.execute("CREATE TABLE orders ("+ str_columns +") ")
+    to_db = []
+    cur = conn.cursor()
+    stmt = 'INSERT INTO orders VALUES({0});'.format(','.join('?' * len(columns)))
+    print(stmt)
+    print(line.values())
+    cur.executemany(stmt, [ tuple(l) for l in [d.values() for d in data]])
+
+    cur = conn.cursor()
+    for row in cur.execute("SELECT order_id, 'hello' FROM orders"):
+        print(row)
+    conn.commit()
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -56,27 +86,31 @@ def main():
     students in a sample spreadsheet:
     https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
     """
-    credentials = get_credentials()
-    http = credentials.authorize(httplib2.Http())
-    discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?'
-                    'version=v4')
-    service = discovery.build('sheets', 'v4', http=http,
-                              discoveryServiceUrl=discoveryUrl)
-
-    spreadsheetId = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'
-    rangeName = 'Class Data!A2:E'
-    result = service.spreadsheets().values().get(
-        spreadsheetId=spreadsheetId, range=rangeName).execute()
-    values = result.get('values', [])
-
-    if not values:
-        print('No data found.')
-    else:
-        print('Name, Major:')
-        for row in values:
-            # Print columns A and E, which correspond to indices 0 and 4.
-            print('%s, %s' % (row[0], row[4]))
-
+#     credentials = get_credentials()
+#     http = credentials.authorize(httplib2.Http())
+#     discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?'
+#                     'version=v4')
+#     service = discovery.build('sheets', 'v4', http=http,
+#                               discoveryServiceUrl=discoveryUrl)
+#
+#     spreadsheetId = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'
+#     rangeName = 'Class Data!A2:E'
+#     result = service.spreadsheets().values().get(
+#         spreadsheetId=spreadsheetId, range=rangeName).execute()
+#     values = result.get('values', [])
+#
+#     if not values:
+#         print('No data found.')
+#     else:
+#         print('Name, Major:')
+#         for row in values:
+#             # Print columns A and E, which correspond to indices 0 and 4.
+#             print('%s, %s' % (row[0], row[4]))
+#
+    orders = read_orders()
+    for order in orders:
+        print(order.keys())
+        break
 
 if __name__ == '__main__':
     main()
