@@ -58,6 +58,42 @@ def populate(table):
     cur.executemany(stmt, lines)
 
 
+def format_nicely(row, output):
+    """format fields in a row for display."""
+    # TODO: clean this up
+
+    # strip at the first dash (or not)
+    dash_pos = row['Item_Name'].index('-')
+    if dash_pos > 0:
+        trimmed = row['Item_Name'][0:dash_pos].strip()
+    else:
+        trimmed = row['Item_Name'].strip()
+    line = [row['Order_ID'], row['Sale_Date'], trimmed, row['Full_Name']]
+    order = row['Order_ID']
+    # group items by order ID
+    if output.get(order, 0) is not 0:
+        # TODO: escape
+        base_regexp = "(d+) " + trimmed
+        old_order = output.get(order)
+        for i, item in enumerate(old_order):
+            import re
+            pp.pprint(item)
+            found = re.search(base_regexp, item)
+            if found:
+                count = found.group(0)
+                old_order[i] = str(int(count) + 1) + " " + trimmed
+            else:
+                old_order.append("1 " + trimmed)
+
+        output[order].append(trimmed)
+        print(output.get(order))
+    else:
+        output[order] = ["1 " + trimmed]
+
+    return output
+
+
+
 def report():
     """select statements"""
     populate('orders')
@@ -65,25 +101,11 @@ def report():
     cur = conn.cursor()
     output = {}
     for row in cur.execute("SELECT orders.*, orderitems.Item_Name  FROM orders, orderitems WHERE orders.Order_ID = orderitems.Order_ID"):
-        # strip at the first dash (or not)
-        dash_pos = row['Item_Name'].index('-')
-        if dash_pos > 0:
-            stripmed = row['Item_Name'][0:dash_pos].strip()
-        else:
-            stripmed = row['Item_Name'].strip()
-        line = [row['Order_ID'], row['Sale_Date'], stripmed, row['Full_Name']]
-        order = row['Order_ID']
-        # TODO: optimize scanning since items are ordered by order ID
-        # group items by order ID
-        if output.get(order, 0) is not 0:
-            output[order].append(stripmed)
-            print(output.get(order))
-        else:
+        output = format_nicely(row, output)
 
-            output[order] = [stripmed]
-        pp.pprint(output)
-        # print(output)
-        # print(row)
+    pp.pprint(output)
+    # print(output)
+    # print(row)
     conn.commit()
 
 
