@@ -3,6 +3,7 @@ from __future__ import print_function
 import csv
 import httplib2
 import os
+import pprint
 import sqlite3
 
 from apiclient import discovery
@@ -22,6 +23,7 @@ SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'Google Sheets API Python Quickstart'
 
+pp = pprint.PrettyPrinter(indent=4)
 
 def dict_factory(cursor, row):
     d = {}
@@ -29,9 +31,10 @@ def dict_factory(cursor, row):
         d[col[0]] = row[idx]
     return d
 
+
 def populate(table):
     columns = []
-    with open('data/'+table+'.csv', 'rb') as csvfile:
+    with open('data/' + table + '.csv', 'rb') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
 
         data = []
@@ -40,13 +43,13 @@ def populate(table):
 
     columns = data[0].keys()
     cur = conn.cursor()
-    str_columns = ",".join(["'" + item.replace(" ", "_") + "'" for item in columns ])
+    str_columns = ",".join(["'" + item.replace(" ", "_") + "'" for item in columns])
 
     print(str_columns)
     print("--" * 40)
-    cur.execute("CREATE TABLE "+table+" ("+ str_columns +") ")
+    cur.execute("CREATE TABLE " + table + " (" + str_columns + ") ")
     cur = conn.cursor()
-    stmt = 'INSERT INTO '+table+' VALUES({0});'.format(','.join('?' * len(columns)))
+    stmt = 'INSERT INTO ' + table + ' VALUES({0});'.format(','.join('?' * len(columns)))
     lines = []
     for row in data:
         line = [str(v) for v in row.values()]
@@ -55,28 +58,34 @@ def populate(table):
     cur.executemany(stmt, lines)
 
 
-
-
-def load_data():
+def report():
+    """select statements"""
     populate('orders')
     populate('orderitems')
     cur = conn.cursor()
     output = {}
-    for row in cur.execute("SELECT orders.*, orderitems.Item_Name  FROM orders, orderitems WHERE orders.Order_ID = orderitems.Order_ID SORT BY orders.Order_ID"):
-        # TODO: optimize scanning since items are ordered by order ID
-        # group items by order ID
-        if
-        # trim at the first dash (or not)
+    for row in cur.execute("SELECT orders.*, orderitems.Item_Name  FROM orders, orderitems WHERE orders.Order_ID = orderitems.Order_ID"):
+        # strip at the first dash (or not)
         dash_pos = row['Item_Name'].index('-')
         if dash_pos > 0:
-            trimmed = row['Item_Name'][0:dash_pos]
+            stripmed = row['Item_Name'][0:dash_pos].strip()
         else:
-            trimmed = row['Item_Name']
-        line = [row['Order_ID'], row['Sale_Date'], trimmed, row['Full_Name']]
-        print(line)
-        pass
-        #print(row)
+            stripmed = row['Item_Name'].strip()
+        line = [row['Order_ID'], row['Sale_Date'], stripmed, row['Full_Name']]
+        order = row['Order_ID']
+        # TODO: optimize scanning since items are ordered by order ID
+        # group items by order ID
+        if output.get(order, 0) is not 0:
+            output[order].append(stripmed)
+            print(output.get(order))
+        else:
+
+            output[order] = [stripmed]
+        pp.pprint(output)
+        # print(output)
+        # print(row)
     conn.commit()
+
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -107,30 +116,7 @@ def get_credentials():
     return credentials
 
 def main():
-#     credentials = get_credentials()
-#     http = credentials.authorize(httplib2.Http())
-#     discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?'
-#                     'version=v4')
-#     service = discovery.build('sheets', 'v4', http=http,
-#                               discoveryServiceUrl=discoveryUrl)
-#
-#     spreadsheetId = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'
-#     rangeName = 'Class Data!A2:E'
-#     result = service.spreadsheets().values().get(
-#         spreadsheetId=spreadsheetId, range=rangeName).execute()
-#     values = result.get('values', [])
-#
-#     if not values:
-#         print('No data found.')
-#     else:
-#         print('Name, Major:')
-#         for row in values:
-#             # Print columns A and E, which correspond to indices 0 and 4.
-#             print('%s, %s' % (row[0], row[4]))
-#
-    orders = load_data()
-#    for order in orders: print(order.keys())
-#        break
+    report()
 
 conn = sqlite3.connect(':memory:')
 conn.text_factory = str
@@ -139,4 +125,3 @@ conn.row_factory = dict_factory
 
 if __name__ == '__main__':
     main()
-
