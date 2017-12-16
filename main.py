@@ -23,9 +23,15 @@ CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'Google Sheets API Python Quickstart'
 
 
-def read_orders():
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
+def populate(table):
     columns = []
-    with open('data/orders.csv', 'rb') as csvfile:
+    with open('data/'+table+'.csv', 'rb') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
 
         data = []
@@ -33,22 +39,43 @@ def read_orders():
             data.append(line)
 
     columns = data[0].keys()
-    conn = sqlite3.connect(':memory:')
     cur = conn.cursor()
-    str_columns = ",".join(["'"+item.replace(" ", "_") + "'"for item in columns ])
+    str_columns = ",".join(["'" + item.replace(" ", "_") + "'" for item in columns ])
 
     print(str_columns)
-    cur.execute("CREATE TABLE orders ("+ str_columns +") ")
-    to_db = []
+    print("--" * 40)
+    cur.execute("CREATE TABLE "+table+" ("+ str_columns +") ")
     cur = conn.cursor()
-    stmt = 'INSERT INTO orders VALUES({0});'.format(','.join('?' * len(columns)))
-    print(stmt)
-    print(line.values())
-    cur.executemany(stmt, [ tuple(l) for l in [d.values() for d in data]])
+    stmt = 'INSERT INTO '+table+' VALUES({0});'.format(','.join('?' * len(columns)))
+    lines = []
+    for row in data:
+        line = [str(v) for v in row.values()]
+        lines.append(tuple(line))
 
+    cur.executemany(stmt, lines)
+
+
+
+
+def load_data():
+    populate('orders')
+    populate('orderitems')
     cur = conn.cursor()
-    for row in cur.execute("SELECT order_id, 'hello' FROM orders"):
-        print(row)
+    output = {}
+    for row in cur.execute("SELECT orders.*, orderitems.Item_Name  FROM orders, orderitems WHERE orders.Order_ID = orderitems.Order_ID SORT BY orders.Order_ID"):
+        # TODO: optimize scanning since items are ordered by order ID
+        # group items by order ID
+        if
+        # trim at the first dash (or not)
+        dash_pos = row['Item_Name'].index('-')
+        if dash_pos > 0:
+            trimmed = row['Item_Name'][0:dash_pos]
+        else:
+            trimmed = row['Item_Name']
+        line = [row['Order_ID'], row['Sale_Date'], trimmed, row['Full_Name']]
+        print(line)
+        pass
+        #print(row)
     conn.commit()
 
 def get_credentials():
@@ -101,10 +128,14 @@ def main():
 #             # Print columns A and E, which correspond to indices 0 and 4.
 #             print('%s, %s' % (row[0], row[4]))
 #
-    orders = read_orders()
-#    for order in orders:
-#        print(order.keys())
+    orders = load_data()
+#    for order in orders: print(order.keys())
 #        break
+
+conn = sqlite3.connect(':memory:')
+conn.text_factory = str
+conn.row_factory = dict_factory
+
 
 if __name__ == '__main__':
     main()
