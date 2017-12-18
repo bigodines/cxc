@@ -73,7 +73,7 @@ def format_nicely(row, output):
     # group items by order ID
     if output.get(order, 0) is not 0:
         # TODO: escape
-        base_regexp = "(d+) " + trimmed
+        base_regexp = "(\d+) " + trimmed
         old_order = output.get(order)
         new_order = []
         for i, item in enumerate(old_order):
@@ -82,13 +82,17 @@ def format_nicely(row, output):
             pp.pprint(item)
             found = re.search(base_regexp, item)
             if found:
-                count = found.group(0)
-                new_order.append(str(int(count) + 1) + " " + trimmed)
+                pp.pprint(found.group(1))
+                count = int(found.group(1))
+                new_item = str(count + 1) + " " + trimmed
+                pp.pprint(new_item)
+                print("---")
+                new_order.append(new_item)
             else:
 #                old_order.append("1 " + trimmed)
                 pass
-
-        output[order].append(trimmed)
+        # output[order] = new_order
+        # output[order].append(trimmed)
         print(output.get(order))
     else:
         output[order] = ["1 " + trimmed]
