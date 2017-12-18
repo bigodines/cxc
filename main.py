@@ -75,15 +75,18 @@ def format_nicely(row, output):
         # TODO: escape
         base_regexp = "(d+) " + trimmed
         old_order = output.get(order)
+        new_order = []
         for i, item in enumerate(old_order):
+            pp.pprint(item)
             import re
             pp.pprint(item)
             found = re.search(base_regexp, item)
             if found:
                 count = found.group(0)
-                old_order[i] = str(int(count) + 1) + " " + trimmed
+                new_order.append(str(int(count) + 1) + " " + trimmed)
             else:
-                old_order.append("1 " + trimmed)
+#                old_order.append("1 " + trimmed)
+                pass
 
         output[order].append(trimmed)
         print(output.get(order))
