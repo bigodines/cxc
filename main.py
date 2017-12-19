@@ -73,30 +73,28 @@ def format_nicely(row, output):
     # group items by order ID
     if output.get(order, 0) is not 0:
         # TODO: escape
-        base_regexp = "(\d+) " + trimmed
         old_order = output.get(order)
-        new_order = []
-        for i, item in enumerate(old_order):
-            pp.pprint(item)
-            import re
-            pp.pprint(item)
-            found = re.search(base_regexp, item)
-            if found:
-                pp.pprint(found.group(1))
-                count = int(found.group(1))
-                new_item = str(count + 1) + " " + trimmed
-                pp.pprint(new_item)
-                print("---")
-                new_order.append(new_item)
+        temp = {}
+        for item in old_order:
+            if temp.get(item, 0) == 0:
+                temp[item] = 1
             else:
-#                old_order.append("1 " + trimmed)
-                pass
-        # output[order] = new_order
-        # output[order].append(trimmed)
-        print(output.get(order))
-    else:
-        output[order] = ["1 " + trimmed]
+                temp[item] = int(temp[item]) + 1
 
+        new_order = []
+        keys = temp.keys()
+        pp.pprint(keys)
+        print("!")
+        for k in keys:
+            v = temp[k]
+            print(k, v)
+            new_order.append(" ".join([str(v)]+ [k]))
+
+
+        #pp.pprint(new_order)
+        output[order] = new_order
+    else:
+        output[order] = [trimmed]
     return output
 
 
@@ -110,9 +108,7 @@ def report():
     for row in cur.execute("SELECT orders.*, orderitems.Item_Name  FROM orders, orderitems WHERE orders.Order_ID = orderitems.Order_ID"):
         output = format_nicely(row, output)
 
-    pp.pprint(output)
-    # print(output)
-    # print(row)
+    #pp.pprint(output)
     conn.commit()
 
 
