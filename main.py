@@ -63,37 +63,21 @@ def format_nicely(row, output):
     # TODO: clean this up
 
     # strip at the first dash (or not)
-    dash_pos = row['Item_Name'].index('-')
-    if dash_pos > 0:
+    try:
+        dash_pos = row['Item_Name'].index('-')
         trimmed = row['Item_Name'][0:dash_pos].strip()
-    else:
+    except:
         trimmed = row['Item_Name'].strip()
+
     line = [row['Order_ID'], row['Sale_Date'], trimmed, row['Full_Name']]
     order = row['Order_ID']
     # group items by order ID
     if output.get(order, 0) is not 0:
-        # TODO: escape
         old_order = output.get(order)
         temp = {}
-        for item in old_order:
-            if temp.get(item, 0) == 0:
-                temp[item] = 1
-            else:
-                temp[item] = int(temp[item]) + 1
-
-        new_order = []
-        keys = temp.keys()
-        pp.pprint(keys)
-        print("!")
-        for k in keys:
-            v = temp[k]
-            print(k, v)
-            new_order.append(" ".join([str(v)]+ [k]))
-
-
-        #pp.pprint(new_order)
-        output[order] = new_order
+        old_order.append(trimmed)
     else:
+        # single item order
         output[order] = [trimmed]
     return output
 
@@ -108,7 +92,7 @@ def report():
     for row in cur.execute("SELECT orders.*, orderitems.Item_Name  FROM orders, orderitems WHERE orders.Order_ID = orderitems.Order_ID"):
         output = format_nicely(row, output)
 
-    #pp.pprint(output)
+    pp.pprint(output)
     conn.commit()
 
 
