@@ -58,8 +58,8 @@ def populate(table):
     cur.executemany(stmt, lines)
 
 
-def format_nicely(row, output):
-    """format fields in a row for display."""
+def group(row, output):
+    """handmade group by order id"""
     # TODO: clean this up
 
     # strip at the first dash (or not)
@@ -90,8 +90,12 @@ def report():
     cur = conn.cursor()
     output = {}
     for row in cur.execute("SELECT orders.*, orderitems.Item_Name  FROM orders, orderitems WHERE orders.Order_ID = orderitems.Order_ID"):
-        output = format_nicely(row, output)
+        output = group(row, output)
 
+    nicely = {}
+    for line in output.keys():
+        items = output[line]
+        # TODO: format nicely.. items..
     pp.pprint(output)
     conn.commit()
 
