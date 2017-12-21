@@ -69,18 +69,29 @@ def group(row, output):
     except:
         trimmed = row['Item_Name'].strip()
 
-    line = [row['Order_ID'], row['Sale_Date'], trimmed, row['Full_Name']]
     order = row['Order_ID']
     # group items by order ID
     if output.get(order, 0) is not 0:
-        old_order = output.get(order)
-        temp = {}
-        old_order.append(trimmed)
+        full_order = output.get(order)
+        full_order['items'].append(trimmed)
     else:
         # single item order
-        output[order] = [trimmed]
+        output[order] = {'items': [trimmed]}
     return output
 
+def format_nicely(raw_items):
+    temp = {}
+    for item in raw_items:
+        if temp.get(item):
+            temp[item] = temp[item] + 1
+        else:
+            temp[item] = 1
+
+    ret = []
+    for k in temp.keys():
+        ret.append(" ".join([str(temp[k])]+[k]))
+
+    return ret
 
 
 def report():
@@ -94,7 +105,9 @@ def report():
 
     nicely = {}
     for line in output.keys():
-        items = output[line]
+        items = format_nicely(output[line]['items'])
+        output[line]['items'] = items
+
         # TODO: format nicely.. items..
     pp.pprint(output)
     conn.commit()
