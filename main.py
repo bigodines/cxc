@@ -75,8 +75,8 @@ def group(row, output):
         full_order = output.get(order)
         full_order['items'].append(trimmed)
     else:
-        # single item order
         output[order] = {'items': [trimmed]}
+        output[order]['details'] = row
     return output
 
 def format_nicely(raw_items):
